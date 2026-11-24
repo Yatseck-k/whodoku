@@ -1,0 +1,30 @@
+{
+  "_runtime-dom.esm-bundler-BKe-b1V1.js": {
+    "file": "assets/runtime-dom.esm-bundler-BKe-b1V1.js",
+    "name": "runtime-dom.esm-bundler"
+  },
+  "resources/whodoku/js/app.ts": {
+    "file": "assets/app-BxZ6F_6s.js",
+    "name": "app",
+    "src": "resources/whodoku/js/app.ts",
+    "isEntry": true,
+    "imports": [
+      "_runtime-dom.esm-bundler-BKe-b1V1.js"
+    ],
+    "css": [
+      "assets/app-B2Ld9GEV.css"
+    ]
+  },
+  "resources/whodoku/js/orchid-map-editor.ts": {
+    "file": "assets/orchid-map-editor-ChmGb7M1.js",
+    "name": "orchid-map-editor",
+    "src": "resources/whodoku/js/orchid-map-editor.ts",
+    "isEntry": true,
+    "imports": [
+      "_runtime-dom.esm-bundler-BKe-b1V1.js"
+    ],
+    "css": [
+      "assets/orchid-map-editor-DPkFkM7H.css"
+    ]
+  }
+}

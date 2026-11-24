@@ -1,0 +1,11 @@
+/.idea/
+/node_modules/
+/vendor/
+/.phpunit.cache/
+/.phpunit.result.cache
+/.env
+/dev-app/bootstrap/cache/*.php
+/dev-app/storage/
+/dev-app/public/build/
+/dev-app/public/fonts/
+/dev-app/public/icons/

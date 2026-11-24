@@ -1,0 +1,22 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set container user
+        run: |
+          echo "WHODOKU_UID=$(id -u)" >> "$GITHUB_ENV"
+          echo "WHODOKU_GID=$(id -g)" >> "$GITHUB_ENV"
+      - name: Start Whodoku
+        run: make setup
+      - name: PHP tests
+        run: make test
+      - name: Frontend checks
+        run: make frontend-test
