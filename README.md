@@ -1,34 +1,67 @@
 # Whodoku
 
-Whodoku — Composer-пакет игры на Laravel. В репозитории есть локальное Laravel-приложение `dev-app` для разработки и проверки пакета без SelfBio. Это приложение предназначено только для локальной разработки: оно использует тестовый ключ, локальную базу и тестовый вход игрока.
+**A detective logic puzzle game for Laravel. Place guests on a grid, follow the clues, and find the culprit.**
 
-## Локальный запуск
+[Русский](README.ru.md) · [Package integration plan (RU)](WORK/WHODOKU_PACKAGE_PLAN.md) · [Development](AGENTS.md)
 
-Нужны Docker с Compose и `make`. Из корня репозитория:
+![PHP](https://img.shields.io/badge/PHP-8.5%2B-777BB4?logo=php&logoColor=white) ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white) ![Vue](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white) [![Checks](https://github.com/Yatseck-k/whodoku/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/Yatseck-k/whodoku/actions/workflows/check.yml)
 
-```sh
+## Overview
+
+**Whodoku** is a Composer package for a detective puzzle game. Use witness statements to place guests on a room map, with at most one guest per row and column. The remaining cell holds a clue that helps you identify the culprit.
+
+The repository includes `dev-app`, a Laravel host for running the game and testing the package independently of SelfBio.
+
+## Features
+
+| Area | What it provides |
+| --- | --- |
+| **Game** | Interactive room grid, witness statements, tutorial, and case catalog |
+| **Cases** | Puzzle generation and a guest-accessible demo case in the local app |
+| **Player progression** | Detective profile, skills, statistics, and rankings |
+| **Package integration** | Laravel package discovery for game routes, configuration, and migrations |
+| **Administration** | Optional Orchid provider for game screens, permissions, and a map editor |
+
+## Technology
+
+| Layer | Stack |
+| --- | --- |
+| **Backend** | PHP 8.5, Laravel 13, Inertia.js 3 |
+| **Frontend** | Vue 3, TypeScript, Vite 8 |
+| **Database** | PostgreSQL 17 in the local environment |
+| **Administration** | Orchid 14 |
+| **Development** | Docker Compose, Make, Node.js 24 in the frontend container |
+
+## Quick start
+
+Requires Git, Docker with Compose, and Make.
+
+```bash
+git clone https://github.com/Yatseck-k/whodoku.git
+cd whodoku
 make setup
 ```
 
-Откройте <http://localhost:8088/game> или <http://localhost:8088/puzzles>. Подготовка устанавливает PHP- и frontend-зависимости, собирает ассеты, применяет миграции, заполняет справочники, создаёт одно доступное гостю дело, если подходящего дела ещё нет, и запускает приложение. База хранится в отдельном Docker volume; повторный `make setup` сохраняет данные.
+Open [the game](http://localhost:8088/game), [the case catalog](http://localhost:8088/puzzles), or [the rules](http://localhost:8088/rules). Setup installs dependencies, builds and publishes assets, runs migrations, seeds reference data, and creates a guest case if needed. The PostgreSQL volume persists across `make down` and subsequent setup runs.
 
-Остановить контейнеры: `make down`, запустить снова: `make up`. Остановка не удаляет базу. После изменений frontend выполните `make build`, чтобы пересобрать и скопировать ассеты в тестовое приложение.
+The local app uses a development key, a local database, and a test player login. Use it for local development only. Set `WHODOKU_UID` and `WHODOKU_GID` if the containers need to run under a different user.
 
-## Проверки
+## Development commands
 
-```sh
-make test           # PHP unit- и интеграционные проверки; сначала выполните make setup
-make frontend-test  # frontend-тесты, типы и линтер
-```
+| Command | What it does |
+| --- | --- |
+| `make up` / `make down` | Start or stop the development services |
+| `make build` | Rebuild and publish the frontend assets to the local app |
+| `make test` | Run PHPUnit unit and integration tests after `make setup` |
+| `make frontend-test` | Run Vitest, Vue type checks, and ESLint |
 
-Интеграционные smoke-тесты читают локальную базу и проверяют загрузку страницы, каталог и открытие дела. Они не проверяют все игровые сценарии и не очищают данные. Для запуска контейнеров под другим пользователем можно передать переменные `WHODOKU_UID` и `WHODOKU_GID`.
+The integration tests use the local database to check routes such as the game page, catalog, and case page.
 
-## Пакет
+## Laravel integration
 
-Провайдер регистрируется через Laravel package discovery, загружает настройки `killdoku` и `story`, игровые маршруты и миграции. Игровым маршрутам необходимы подключение базы данных `whodoku` и guard `player`; пример настройки находится в `dev-app/config`. По умолчанию игровые страницы используют шаблон `whodoku::whodoku`. Приложение может выбрать собственный шаблон через настройку `whodoku.root_view`, например чтобы добавить SEO-разметку.
+- The package provider registers the game routes, migrations, and the `killdoku` and `story` configuration. The host provides a database connection named `whodoku` and a `player` guard. See [the local app configuration](dev-app/config).
+- The default Inertia root view is `whodoku::whodoku`. Set `whodoku.root_view` to use a host view, for example to add SEO metadata.
+- The build produces `public/build/whodoku` with a dedicated Vite manifest for the game and map editor. To publish assets from a built package in the host, run `php artisan vendor:publish --tag=whodoku-assets --force`. This overwrites matching public assets.
+- Register `Whodoku\Orchid\PlatformProvider` to enable the private Orchid routes, game menu, and `platform.puzzles.*` permissions. Register the routes through the provider only to avoid duplicates. Some admin actions expect `Whodoku\Models\User` and users in the game schema.
 
-Для интеграции с Orchid зарегистрируйте `Whodoku\Orchid\PlatformProvider` в провайдерах приложения. Он добавит игровые маршруты в приватную группу Orchid, а также игровое меню и права `platform.puzzles.*`. Не подключайте одновременно `routes/platform.php` вручную: это повторно зарегистрирует маршруты. Игровые модели и транзакции используют соединение `whodoku`, не переключая соединение приложения в HTTP-запросах. Админская интеграция ещё требует проверки: некоторые действия ожидают `Whodoku\Models\User`, а игровые таблицы ссылаются на пользователей в игровой схеме. Произвольная модель пользователя приложения пока не поддерживается.
-
-Сборка создаёт `public/build/whodoku` с отдельным manifest и точками входа игры и редактора карты. После установки собранного пакета в Laravel-приложение ассеты можно скопировать командой `php artisan vendor:publish --tag=whodoku-assets --force`. Команда перезаписывает совпадающие файлы в публичном каталоге приложения.
-
-Интеграция пакета с произвольным приложением ещё не завершена: необходимо проверить подключение `whodoku`, guard игрока, настройки Telegram и оплаты, SEO и Orchid. Тестовое приложение не подтверждает работу всех этих интеграций. Подробности и оставшиеся этапы — в [WORK/WHODOKU_PACKAGE_PLAN.md](WORK/WHODOKU_PACKAGE_PLAN.md).
+Integration with other Laravel hosts still needs validation, including the database, player guard, Telegram, payments, SEO, and Orchid. See the [package integration plan (RU)](WORK/WHODOKU_PACKAGE_PLAN.md) for the remaining work.
